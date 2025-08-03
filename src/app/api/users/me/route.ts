@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-
 import { connectDB } from "@/dbConfig/dbConfig";
 import User from "@/app/models/userModels";
 
@@ -8,16 +7,15 @@ connectDB();
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization");
+    const token = req.cookies.get("token")?.value;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ message: "Missing or invalid token" }, { status: 400 });
+    if (!token) {
+      return NextResponse.json({ message: "No token in cookies" }, { status: 400 });
     }
 
-    const token = authHeader.split(" ")[1];
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.userId).select("-password");
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
